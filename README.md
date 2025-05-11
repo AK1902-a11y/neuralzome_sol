@@ -22,7 +22,6 @@ This project implements an Extended Kalman Filter (EKF) to fuse drive feedback a
   - `pandas`
   - `toml`
   - `mcap` (for reading MCAP files)
-  - `filterpy` (for EKF implementation)
 
 ### Installation (Using Virtual Environment)
 
