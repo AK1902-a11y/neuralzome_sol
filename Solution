@@ -1,167 +1,119 @@
-Use the dynamic MCAP + Protobuf Python API approach. It :
-
-Needs no external .proto files (everything is embedded in your data.mcap),
-
-Streams messages one at a time (no huge JSON blobs sitting on disk), and
-
-Yields ready‑to‑use Python objects (or simple dicts) for your EKF pipeline.
-
-This gives you real‑time decoding performance almost on par with static classes, but with zero maintenance of .proto paths or generated code. It’s both the easiest and the most efficient path to integrate drive feedback and IMU data into your EKF.
-
-
-✅ Step 1: Understand the Dataset and Robot Model
-
+✅ Step 1: Get to Know Your Data and Robot
 What to Do:
-Read the data.toml file to get robot parameters like:
 
-wheelbase (distance between front and rear axles)
+Open the data.toml file to find important robot details like:
 
-track width
+Wheelbase (distance between front and rear wheels)
 
-Load and inspect the MCAP file contents (sensor and ground truth topics).
+Track width (distance between left and right wheels)
 
-Extract data streams:
+Open the MCAP file and check what types of sensor data it contains.
 
-Drive Feedback: Actual theta (steering) and omega (velocity)
+Focus on these key data types:
 
-IMU: Accelerometer + gyroscope
+Drive Feedback: Gives steering angle and speed
 
-Ground Truth Pose: Position + orientation (for validation)
+IMU: Provides acceleration and rotation rates
 
-Purpose:
-Understand the structure of your input data.
+Ground Truth: Tells the actual position and orientation of the robot (used for checking accuracy)
 
-Know how the robot moves (kinematics).
+Why This Matters:
+You need to understand what your robot looks like and how it moves. This step helps you figure out what data you'll use to estimate the robot’s position and what data you'll use to check if your estimation is accurate.
 
-Identify what data feeds into the EKF and what data is used for validation.
-
-✅ Step 2: Define the EKF State and Models
+✅ Step 2: Decide What the Filter Should Estimate
 What to Do:
-Define your state vector:
 
-x = [x_position, y_position, heading_yaw, linear_velocity]
+Decide what you want to track. A common choice:
 
-Define the motion model (prediction step) using the bicycle kinematic model:
+X position
 
-Inputs: omega (velocity), theta (steering angle)
+Y position
 
-Use wheelbase from the TOML file
+Heading (yaw)
 
-Define the observation model:
+Speed
 
-From IMU: yaw rate (gyroscope), acceleration (accelerometer)
+Describe how the robot moves, using a simple bicycle model based on its steering and speed.
 
-Optionally fuse additional observations like velocity from drive feedback
+Describe what the sensors measure:
 
-Purpose:
-EKF needs a model of how the robot moves (motion model) and what it observes (sensor model).
+IMU gives yaw rate and acceleration
 
-This step formalizes how inputs and measurements affect your state estimate.
+Drive feedback can also help estimate speed
 
-✅ Step 3: Implement EKF Logic
+Why This Matters:
+You need to tell the filter how your robot moves and what the sensors tell you. This helps the filter combine movement and sensor data to estimate position more accurately.
+
+✅ Step 3: Build the Filter Logic
 What to Do:
-Write code for the EKF:
 
-Initialize State & Covariance Matrix
+Set up the starting values for position, speed, and uncertainty.
 
-Prediction Step (apply control inputs to update state estimate)
+For each step:
 
-Update Step (correct prediction using IMU measurements)
+Predict the next position based on steering and speed.
 
-Jacobian Calculations:
+Correct the prediction using IMU data.
 
-For nonlinear models, compute the Jacobians of motion and measurement models.
+Handle any necessary math for how predictions and corrections are calculated.
 
-Purpose:
-The EKF combines model-based prediction and sensor correction in a loop.
+Why This Matters:
+This step is the brain of the system. It combines your robot’s model and real sensor data to guess where the robot is and correct that guess over time.
 
-Writing this code builds the fusion system that estimates robot state over time.
-
-✅ Step 4: Synchronize and Process the Dataset
+✅ Step 4: Get the Data in Sync
 What to Do:
-Parse MCAP file to extract time-synchronized:
 
-Drive Feedback
+Read the MCAP file and pull out the drive feedback, IMU, and ground truth data.
 
-IMU readings
+Make sure the timestamps of all sensors line up correctly.
 
-Ground Truth Pose
+If one sensor updates faster than another, interpolate or adjust the timing to match.
 
-Interpolate or align timestamps if sensors are at different rates.
+Why This Matters:
+You can’t combine data from different sensors unless they’re lined up in time. This step ensures you’re using the right sensor readings at the right moments.
 
-Purpose:
-You need synchronized, clean data to feed into the EKF.
-
-Ensures that each prediction/update step is accurate and correctly timed.
-
-✅ Step 5: Run EKF on Data
+✅ Step 5: Run the Filter with Real Data
 What to Do:
-Loop through the data chronologically.
 
-At each timestep:
+Go through the data in time order.
 
-Use Drive Feedback as control input (omega, theta) → predict.
+At each time step:
 
-Use IMU data as measurement → update.
+Use drive feedback to predict the robot’s new position.
 
-Store estimated pose and velocity at each step.
+Use IMU data to correct the position.
 
-Purpose:
-This applies your EKF to real sensor data.
+Save the estimated result.
 
-You’ll now get a full trajectory estimate over time.
+Why This Matters:
+This is where your filter does its job—tracking the robot’s movement through real data, step by step.
 
-✅ Step 6: Validate Results Against Ground Truth
+✅ Step 6: Check How Well It Worked
 What to Do:
-Compare your EKF's estimated pose (x, y, yaw) with the ground truth.
 
-Compute errors:
+Compare your estimated positions to the ground truth data.
 
-RMSE (Root Mean Square Error)
+Measure the differences:
 
-Final position error
+RMSE (overall error)
 
-Optionally: use plots to visualize trajectories.
+Final position error (where the robot ended up)
 
-Purpose:
-This step shows how accurate your EKF is.
+(Optional) Plot both paths to see how closely they match.
 
-Directly addresses the assignment’s requirement to “validate the filter’s performance.”
+Why This Matters:
+You want to see if your filter is working well. Comparing it to real position data helps you understand how accurate it is.
 
-✅ Step 7: Visualize the Results (Optional but Recommended)
+✅ Step 7: Visualize the Results (Optional)
 What to Do:
-Plot:
 
-EKF estimated trajectory
+Create plots that show:
 
-Ground truth trajectory
+The path estimated by the filter
+
+The actual path from ground truth
 
 Error over time
 
-Use matplotlib, plotly, or seaborn
-
-Purpose:
-Helps demonstrate your understanding visually.
-
-Makes your results more compelling to reviewers.
-
-✅ Step 8: Write Explanation of Approach & Assumptions
-What to Do:
-Document your EKF implementation:
-
-Motion model used
-
-Sensor model used
-
-How you handled noise, tuning parameters
-
-Assumptions made (e.g., Gaussian noise, sensor delay, constant velocity)
-
-Keep it brief and clear.
-
-Purpose:
-This fulfills the requirement to “include a brief explanation.”
-
-Shows your reasoning and understanding behind the implementation.
-
-
+Why This Matters:
+A good visual makes your work easier to understand. It also helps you catch any problems more quickly.

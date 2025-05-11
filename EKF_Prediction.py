@@ -6,7 +6,7 @@ import toml
 from mcap.reader import make_reader
 from mcap_protobuf.decoder import DecoderFactory
 from google.protobuf.descriptor import FieldDescriptor
-
+import toml
 
 def extract_numeric_fields(proto):
     fields = sorted(proto.DESCRIPTOR.fields, key=lambda f: f.number)
@@ -18,6 +18,12 @@ def extract_numeric_fields(proto):
             except Exception:
                 pass
     return values
+
+with open("data.toml", "r") as f:
+    data = toml.load(f)
+
+print(data)
+
 def load_data(mcap_path):
     imu_data, cmd_data, fb_data, gt_data = [], [], [], []
 
