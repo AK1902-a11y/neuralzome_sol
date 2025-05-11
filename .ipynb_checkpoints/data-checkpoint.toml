@@ -1,0 +1,9 @@
+wheel_base = 1.12
+front_track_width = 1.03
+rear_track_width = 0.80
+front_wheel_diameter = 0.5334
+rear_wheel_diameter = 0.5334
+frontcam_position = [1.2, 0.0375, 1.05] # [x, y, z] wrt base_footprint
+frontcam_rotation = [0.430459334576879, -0.560985526796931, 0.560985526796931, -0.430459334576879] # [w, x, y, z] wrt base_footprint
+imu_position = [1.2, 0.0375, 1.05] # [x, y, z] wrt base_footprint
+imu_rotation = [-0.608761429008721, 0.0, -0.793353340291235, 0.0] # [w, x, y, z] wrt base_footprint

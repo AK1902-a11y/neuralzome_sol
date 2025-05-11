@@ -1,0 +1,167 @@
+Use the dynamic MCAP + Protobuf Python API approach. It :
+
+Needs no external .proto files (everything is embedded in your data.mcap),
+
+Streams messages one at a time (no huge JSON blobs sitting on disk), and
+
+Yields ready‑to‑use Python objects (or simple dicts) for your EKF pipeline.
+
+This gives you real‑time decoding performance almost on par with static classes, but with zero maintenance of .proto paths or generated code. It’s both the easiest and the most efficient path to integrate drive feedback and IMU data into your EKF.
+
+
+✅ Step 1: Understand the Dataset and Robot Model
+
+What to Do:
+Read the data.toml file to get robot parameters like:
+
+wheelbase (distance between front and rear axles)
+
+track width
+
+Load and inspect the MCAP file contents (sensor and ground truth topics).
+
+Extract data streams:
+
+Drive Feedback: Actual theta (steering) and omega (velocity)
+
+IMU: Accelerometer + gyroscope
+
+Ground Truth Pose: Position + orientation (for validation)
+
+Purpose:
+Understand the structure of your input data.
+
+Know how the robot moves (kinematics).
+
+Identify what data feeds into the EKF and what data is used for validation.
+
+✅ Step 2: Define the EKF State and Models
+What to Do:
+Define your state vector:
+
+x = [x_position, y_position, heading_yaw, linear_velocity]
+
+Define the motion model (prediction step) using the bicycle kinematic model:
+
+Inputs: omega (velocity), theta (steering angle)
+
+Use wheelbase from the TOML file
+
+Define the observation model:
+
+From IMU: yaw rate (gyroscope), acceleration (accelerometer)
+
+Optionally fuse additional observations like velocity from drive feedback
+
+Purpose:
+EKF needs a model of how the robot moves (motion model) and what it observes (sensor model).
+
+This step formalizes how inputs and measurements affect your state estimate.
+
+✅ Step 3: Implement EKF Logic
+What to Do:
+Write code for the EKF:
+
+Initialize State & Covariance Matrix
+
+Prediction Step (apply control inputs to update state estimate)
+
+Update Step (correct prediction using IMU measurements)
+
+Jacobian Calculations:
+
+For nonlinear models, compute the Jacobians of motion and measurement models.
+
+Purpose:
+The EKF combines model-based prediction and sensor correction in a loop.
+
+Writing this code builds the fusion system that estimates robot state over time.
+
+✅ Step 4: Synchronize and Process the Dataset
+What to Do:
+Parse MCAP file to extract time-synchronized:
+
+Drive Feedback
+
+IMU readings
+
+Ground Truth Pose
+
+Interpolate or align timestamps if sensors are at different rates.
+
+Purpose:
+You need synchronized, clean data to feed into the EKF.
+
+Ensures that each prediction/update step is accurate and correctly timed.
+
+✅ Step 5: Run EKF on Data
+What to Do:
+Loop through the data chronologically.
+
+At each timestep:
+
+Use Drive Feedback as control input (omega, theta) → predict.
+
+Use IMU data as measurement → update.
+
+Store estimated pose and velocity at each step.
+
+Purpose:
+This applies your EKF to real sensor data.
+
+You’ll now get a full trajectory estimate over time.
+
+✅ Step 6: Validate Results Against Ground Truth
+What to Do:
+Compare your EKF's estimated pose (x, y, yaw) with the ground truth.
+
+Compute errors:
+
+RMSE (Root Mean Square Error)
+
+Final position error
+
+Optionally: use plots to visualize trajectories.
+
+Purpose:
+This step shows how accurate your EKF is.
+
+Directly addresses the assignment’s requirement to “validate the filter’s performance.”
+
+✅ Step 7: Visualize the Results (Optional but Recommended)
+What to Do:
+Plot:
+
+EKF estimated trajectory
+
+Ground truth trajectory
+
+Error over time
+
+Use matplotlib, plotly, or seaborn
+
+Purpose:
+Helps demonstrate your understanding visually.
+
+Makes your results more compelling to reviewers.
+
+✅ Step 8: Write Explanation of Approach & Assumptions
+What to Do:
+Document your EKF implementation:
+
+Motion model used
+
+Sensor model used
+
+How you handled noise, tuning parameters
+
+Assumptions made (e.g., Gaussian noise, sensor delay, constant velocity)
+
+Keep it brief and clear.
+
+Purpose:
+This fulfills the requirement to “include a brief explanation.”
+
+Shows your reasoning and understanding behind the implementation.
+
+
